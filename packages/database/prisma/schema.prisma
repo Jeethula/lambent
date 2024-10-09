@@ -1,0 +1,802 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+ 
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+ 
+model User {
+  id               Int               @id @default(autoincrement())
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  FirstName        String?
+  MiddleName       String?
+  LastName         String?
+  email            String            @unique
+  hashedPassword   String
+  Phonenumber      String?
+  address          String?
+  DOB              DateTime?
+  Weight           Float?
+  Height           String?
+  Photo            String?
+  Language         String?
+  Userstatus       String            @default("Active")
+  addressJson      Json?
+  userConsent      Boolean           @default(true)
+  API              API[]
+  childrens        Children[]
+  comments         Comment[]
+  FileManager      FileManager[]
+  FormAccess       FormAccess[]
+  CreatedForms     FormMetadata[]    @relation("FormMetadataCreatedby")
+  UpdatedForms     FormMetadata[]    @relation("FormMetadataUpdatedby")
+  Goal             Goal[]
+  GoalLinks        GoalLinks[]
+  OriginalMessages Message[]         @relation("originalSender")
+  ReceivedMessage  Message[]         @relation("receiver")
+  SentMessage      Message[]         @relation("sender")
+  MileStone        Milestone[]
+  mentorNotes      Notes[]           @relation("MentorNotes")
+  notes            Notes[]           @relation("UserNotes")
+  Notifications    Notification[]
+  ResourceLink     ResourceLink[]
+  sessions         Session[]
+  tokens           Token[]
+  UserBadge        UserBadge[]
+  UserGroups       UserGroup[]
+  parents          UserMentor[]      @relation("Parent-Mentor")
+  Mentors          UserMentor[]      @relation("Mentor-Parent")
+  userMileStones   UserMilestone[]
+  userRegions      UserRegions[]
+  userRole         UserRole[]
+  userTagRelation  UserTagRelation[]
+}
+ 
+model UserMentor {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    Int
+  mentorId  Int
+  Mentor    User     @relation("Parent-Mentor", fields: [mentorId], references: [id])
+  User      User     @relation("Mentor-Parent", fields: [userId], references: [id])
+}
+ 
+model Role {
+  id             Int              @id @default(autoincrement())
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  Name           String
+  Description    String?
+  PermissionId   Int              @default(1)
+  RoleMenu       RoleMenu[]
+  RolePermission RolePermission[]
+  userRole       UserRole[]
+}
+ 
+model UserRole {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    Int
+  roleId    Int
+  role      Role     @relation(fields: [roleId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+ 
+model Children {
+  id        Int       @id @default(autoincrement())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Firstname String?
+  Lastname  String?
+  DOB       DateTime?
+  DueDate   DateTime?
+  Gender    String
+  userId    Int
+  Parent    User      @relation(fields: [userId], references: [id])
+}
+ 
+model Region {
+  id                    Int                     @id @default(autoincrement())
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  Name                  String
+  Active                Boolean                 @default(true)
+  private               Boolean                 @default(false)
+  level                 Int
+  regionId              Int?
+  parentRegion          Region?                 @relation("Region", fields: [regionId], references: [id])
+  Region                Region[]                @relation("Region")
+  RegionProvidersCorner RegionProvidersCorner[]
+  UserRegions           UserRegions[]
+}
+ 
+model UserRegions {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  regionId  Int
+  userId    Int
+  region    Region   @relation(fields: [regionId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+ 
+model RegionProvidersCorner {
+  id              Int             @id @default(autoincrement())
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  regionId        Int
+  providerId      Int
+  providersCorner ProvidersCorner @relation(fields: [providerId], references: [id])
+  region          Region          @relation(fields: [regionId], references: [id])
+}
+ 
+model UserTag {
+  id              Int               @id @default(autoincrement())
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  Name            String
+  Description     String?
+  UserTagRelation UserTagRelation[]
+}
+ 
+model UserTagRelation {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    Int
+  userTagId Int
+  User      User     @relation(fields: [userId], references: [id])
+  UserTag   UserTag  @relation(fields: [userTagId], references: [id])
+}
+ 
+model Message {
+  id               Int      @id @default(autoincrement())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  Text             String
+  Sent             Boolean  @default(false)
+  Delivered        Boolean  @default(false)
+  Read             Boolean  @default(false)
+  receiverId       Int
+  senderId         Int
+  originalSenderId Int?
+  originalSender   User?    @relation("originalSender", fields: [originalSenderId], references: [id])
+  receiver         User     @relation("receiver", fields: [receiverId], references: [id])
+  sender           User     @relation("sender", fields: [senderId], references: [id])
+}
+ 
+model Session {
+  id                 Int       @id @default(autoincrement())
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  expiresAt          DateTime?
+  handle             String    @unique
+  hashedSessionToken String?
+  antiCSRFToken      String?
+  publicData         String?
+  privateData        String?
+  userId             Int?
+  user               User?     @relation(fields: [userId], references: [id])
+}
+ 
+model Token {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  hashedToken String
+  type        String
+  expiresAt   DateTime
+  sentTo      String
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+}
+ 
+model UserMilestone {
+  id                Int            @id @default(autoincrement())
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  createdById       Int
+  StartDate         DateTime       @default(now())
+  EndDate           DateTime
+  Vision            String?
+  Purpose           String?
+  Obstacle          String?
+  active            Boolean        @default(true)
+  mentees           Int[]
+  Status            Boolean        @default(false)
+  MentorNotes       String?
+  AdditionalNotes   String?
+  Suggestions       String?
+  MileStoneId       Int
+  userId            Int
+  ParentMilestoneId Int?
+  TimeInterval      Int            @default(0)
+  isTemplate        Boolean        @default(false)
+  MileStone         Milestone      @relation(fields: [MileStoneId], references: [id])
+  user              User           @relation(fields: [userId], references: [id])
+  Answer            Answer[]
+  comments          Comment[]
+  ResourceLink      ResourceLink[]
+  userGoals         UserGoal[]
+}
+ 
+model Milestone {
+  id                 Int                  @id @default(autoincrement())
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  Name               String
+  Description        String?
+  Suggestions        String?
+  Image              String?
+  ResourcesLink      String?
+  isUserCreated      Boolean              @default(true)
+  isNotTemplate      Boolean              @default(false)
+  createdByID        Int
+  categoryId         Int
+  subcategoryId      Int
+  TimeInterval       Int                  @default(0)
+  isPublic           Boolean              @default(true)
+  category           Category             @relation(fields: [categoryId], references: [id])
+  createdBy          User                 @relation(fields: [createdByID], references: [id])
+  subcategory        SubCategory          @relation(fields: [subcategoryId], references: [id])
+  goals              Goal[]
+  milestoneResources MilestonesResource[]
+  Question           Question[]
+  ResourceLink       ResourceLink[]
+  userMilestones     UserMilestone[]
+}
+ 
+model Goal {
+  id            Int         @id @default(autoincrement())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  Value         String
+  Description   String?
+  isUserCreated Boolean     @default(true)
+  Frequency     String
+  Count         Int?
+  isNotTemplate Boolean     @default(false)
+  WeekDays      String[]
+  MonthDays     Int[]
+  createdByID   Int
+  milestoneId   Int
+  createdBy     User        @relation(fields: [createdByID], references: [id])
+  milestone     Milestone   @relation(fields: [milestoneId], references: [id])
+  GoalLinks     GoalLinks[]
+  UserGoals     UserGoal[]
+}
+ 
+model UserGoal {
+  id              Int           @id @default(autoincrement())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  createdById     Int
+  StartDate       DateTime      @default(now())
+  EndDate         DateTime?
+  RecursingGoals  Json
+  Notes           String?
+  active          Boolean       @default(true)
+  Private         Boolean       @default(false)
+  Status          Boolean       @default(false)
+  goalId          Int
+  userMileStoneId Int
+  goal            Goal          @relation(fields: [goalId], references: [id])
+  userMilestones  UserMilestone @relation(fields: [userMileStoneId], references: [id])
+  GoalLinks       GoalLinks[]
+}
+ 
+model Comment {
+  id            Int           @id @default(autoincrement())
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  Text          String
+  milestoneId   Int
+  userId        Int
+  UserMilestone UserMilestone @relation(fields: [milestoneId], references: [id])
+  user          User          @relation(fields: [userId], references: [id])
+}
+ 
+model Category {
+  id          Int           @id @default(autoincrement())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  Name        String
+  Description String?
+  Hidden      Boolean       @default(false)
+  isMilestone Boolean       @default(true)
+  isResources Boolean       @default(false)
+  Image       String?
+  Icon        String
+  Color       String
+  SortOrder   Int           @default(autoincrement())
+  milestones  Milestone[]
+  resources   Resource[]
+  subcategory SubCategory[]
+}
+ 
+model SubCategory {
+  id          Int         @id @default(autoincrement())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  Name        String
+  Description String?
+  isMilestone Boolean     @default(true)
+  isResources Boolean     @default(false)
+  categoryId  Int
+  category    Category    @relation(fields: [categoryId], references: [id])
+  milestones  Milestone[]
+  resources   Resource[]
+}
+ 
+model Resource {
+  id                  Int                  @id @default(autoincrement())
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  Name                String
+  Description         String?
+  HtmlCode            String?
+  Attachment          String?
+  ContentType         ContentType          @default(Richtext)
+  slug                String               @unique
+  categoryId          Int
+  subcategoryId       Int
+  public              Boolean              @default(false)
+  category            Category             @relation(fields: [categoryId], references: [id])
+  subcategory         SubCategory          @relation(fields: [subcategoryId], references: [id])
+  MilestonesResources MilestonesResource[]
+  ResourceTags        ResourceTag[]
+}
+ 
+model ResourceTag {
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  resourceId Int
+  tagId      Int
+  resource   Resource @relation(fields: [resourceId], references: [id])
+  tag        Tag      @relation(fields: [tagId], references: [id])
+}
+ 
+model Tag {
+  id          Int           @id @default(autoincrement())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  Name        String
+  ResourceTag ResourceTag[]
+}
+ 
+model MilestonesResource {
+  id          Int       @id @default(autoincrement())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  milestoneId Int
+  resourceId  Int
+  milestone   Milestone @relation(fields: [milestoneId], references: [id])
+  resource    Resource  @relation(fields: [resourceId], references: [id])
+}
+ 
+model RoleMenu {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  roleId    Int
+  menuId    Int
+  menu      Menu     @relation(fields: [menuId], references: [id])
+  role      Role     @relation(fields: [roleId], references: [id])
+}
+ 
+model Menu {
+  id              Int        @id @default(autoincrement())
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  Name            String
+  Icon            String
+  Link            String
+  isTopbarMenu    Boolean    @default(false)
+  isMobilenav     Boolean    @default(false)
+  isHiddenSidebar Boolean    @default(false)
+  SortOrder       Int        @default(autoincrement())
+  menuId          Int?
+  Menu            Menu?      @relation("MenuToSubMenu", fields: [menuId], references: [id])
+  SubMenu         Menu[]     @relation("MenuToSubMenu")
+  RoleMenu        RoleMenu[]
+}
+ 
+model Question {
+  id                Int       @id @default(autoincrement())
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  question          String
+  questionType      String?
+  order             Int?
+  answerOption      Json?
+  unitOfMeasurement String?
+  milestoneId       Int
+  milestone         Milestone @relation(fields: [milestoneId], references: [id])
+  Answer            Answer[]
+}
+ 
+model Answer {
+  id              Int           @id @default(autoincrement())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  answer          String
+  questionId      Int
+  userMilestoneId Int
+  question        Question      @relation(fields: [questionId], references: [id])
+  userMilestone   UserMilestone @relation(fields: [userMilestoneId], references: [id])
+}
+ 
+model FileManager {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  Name        String
+  Description String?
+  Path        String
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+}
+ 
+model ResourceLink {
+  id                  Int            @id @default(autoincrement())
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  Name                String
+  Link                String
+  milestoneId         Int?
+  milestoneTemplateId Int?
+  createdById         Int            @default(8)
+  createdBy           User           @relation(fields: [createdById], references: [id])
+  milestone           UserMilestone? @relation(fields: [milestoneId], references: [id])
+  milestoneTemplate   Milestone?     @relation(fields: [milestoneTemplateId], references: [id])
+}
+ 
+model GoalLinks {
+  id             Int       @id @default(autoincrement())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  Name           String
+  Link           String
+  goalId         Int?
+  goalTemplateId Int?
+  createdById    Int       @default(8)
+  createdBy      User      @relation(fields: [createdById], references: [id])
+  userGoal       UserGoal? @relation(fields: [goalId], references: [id])
+  goalTemplate   Goal?     @relation(fields: [goalTemplateId], references: [id])
+}
+ 
+model Feedback {
+  id         Int     @id @default(autoincrement())
+  Email      String
+  Message    String
+  isReviewed Boolean @default(false)
+  Comments   String?
+}
+ 
+model Announcement {
+  id             Int      @id @default(autoincrement())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  DisplayMessage String
+  Description    String
+  Link           String
+  isPublic       Boolean  @default(false)
+  Type           String
+  StartDate      DateTime
+  EndDate        DateTime
+}
+ 
+model RolePermission {
+  id         Int          @id @default(autoincrement())
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  Resource   String
+  Permission Permission[]
+  roleId     Int
+  role       Role         @relation(fields: [roleId], references: [id])
+}
+ 
+model PCCategory {
+  id              Int               @id @default(autoincrement())
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  Name            String
+  Description     String?
+  Hidden          Boolean           @default(false)
+  Image           String?
+  Icon            String
+  Color           String
+  subcategory     PCSubCategory[]
+  ProvidersCorner ProvidersCorner[]
+}
+ 
+model PCSubCategory {
+  id              Int               @id @default(autoincrement())
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  Name            String
+  Description     String?
+  categoryId      Int
+  category        PCCategory        @relation(fields: [categoryId], references: [id])
+  ProvidersCorner ProvidersCorner[]
+}
+ 
+model PCTag {
+  id                 Int                  @id @default(autoincrement())
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  Name               String
+  ProvidersCornerTag ProvidersCornerTag[]
+}
+ 
+model ProvidersCorner {
+  id                    Int                     @id @default(autoincrement())
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  Name                  String
+  Description           String?
+  HtmlCode              String?
+  Attachment            String?
+  ContentType           ContentType             @default(Richtext)
+  categoryId            Int
+  subcategoryId         Int
+  public                Boolean                 @default(false)
+  slug                  String?                 @default("")
+  category              PCCategory              @relation(fields: [categoryId], references: [id])
+  subcategory           PCSubCategory           @relation(fields: [subcategoryId], references: [id])
+  ProvidersCornerTag    ProvidersCornerTag[]
+  RegionProvidersCorner RegionProvidersCorner[]
+}
+ 
+model ProvidersCornerTag {
+  id                Int             @id @default(autoincrement())
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  providersCornerId Int
+  tagId             Int
+  providersCorner   ProvidersCorner @relation(fields: [providersCornerId], references: [id])
+  tag               PCTag           @relation(fields: [tagId], references: [id])
+}
+ 
+model Event {
+  id                 Int              @id @default(autoincrement())
+  createdAt          DateTime         @default(now())
+  createdBy          Int
+  TableName          String
+  ReferenceRecordId  Int
+  Action             String
+  Description        String
+  EventDescriptionId Int
+  EventDescription   EventDescription @relation(fields: [EventDescriptionId], references: [id])
+}
+ 
+model EventDescription {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  eventName   String   @unique
+  Description String
+  event       Event[]
+}
+ 
+model Group {
+  id                      Int                       @id @default(autoincrement())
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+  Name                    String
+  Description             String                    @default("")
+  parentId                Int?
+  IsChat                  Boolean                   @default(true)
+  parent                  Group?                    @relation("SubGroups", fields: [parentId], references: [id])
+  Subgroups               Group[]                   @relation("SubGroups")
+  GroupResourcePermission GroupResourcePermission[]
+  UserGroups              UserGroup[]
+}
+ 
+model UserGroup {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    Int
+  groupId   Int
+  group     Group    @relation(fields: [groupId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+ 
+model GroupResourcePermission {
+  id         Int          @id @default(autoincrement())
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  groupId    Int
+  resourceId Int
+  type       String
+  Permission Permission[]
+  Group      Group        @relation(fields: [groupId], references: [id])
+}
+ 
+model UiCustomization {
+  id           Int      @id @default(autoincrement())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  Name         String
+  active       Boolean  @default(false)
+  url          String
+  topNavColor  String
+  sidebarColor String
+  textSize     Int
+  topNavHeight Int      @default(48)
+}
+ 
+model Report {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  Title       String
+  Description String
+  slug        String   @unique
+  Query       String
+  isPublic    Boolean  @default(false)
+  isLoggedin  Boolean  @default(false)
+}
+ 
+model FormMetadata {
+  id                 Int      @id @default(autoincrement())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  createdBy          Int
+  updatedBy          Int
+  Name               String
+  Description        String
+  Version            Int      @default(autoincrement())
+  Metajson           Json
+  Responsejson       Json
+  IsComplexLargeForm Boolean  @default(false)
+  NewTableName       String?
+  isPublic           Boolean  @default(false)
+  createdByUser      User     @relation("FormMetadataCreatedby", fields: [createdBy], references: [id])
+  updatedByUser      User     @relation("FormMetadataUpdatedby", fields: [updatedBy], references: [id])
+}
+ 
+model FormMetaHistory {
+  id           Int      @id @default(autoincrement())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  FormId       Int
+  FormVersion  Int
+  FormMetaJson Json
+}
+ 
+model FormAccess {
+  id          Int          @id @default(autoincrement())
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  FormId      Int
+  FormVersion Int
+  UserId      Int
+  Permission  Permission[]
+  User        User         @relation(fields: [UserId], references: [id])
+}
+ 
+model Formmetadatum {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+ 
+model API {
+  id            Int         @id @default(autoincrement())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  Name          String
+  Key           String      @unique
+  Secret        String
+  isActive      Boolean     @default(false)
+  createdBy     Int
+  createdByUser User        @relation(fields: [createdBy], references: [id])
+  ApiEvents     ApiEvents[]
+}
+ 
+model ApiEvents {
+  id                Int      @id @default(autoincrement())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  ApiKey            String
+  Description       String
+  ReferenceRecordId String   @default("")
+  Api               API      @relation(fields: [ApiKey], references: [Key])
+}
+ 
+model Notification {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    Int
+  message   String
+  isRead    Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id])
+}
+ 
+model Configuration {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Name      String
+  Value     String
+}
+ 
+model Badge {
+  id          Int         @id @default(autoincrement())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  Name        String
+  Description String
+  Image       String
+  Count       Int
+  Type        BadgeType
+  UserBadge   UserBadge[]
+}
+ 
+model UserBadge {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    Int
+  badgeId   Int
+  badge     Badge    @relation(fields: [badgeId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+ 
+model Notes {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  note      String
+  userId    Int
+  mentorId  Int
+  mentor    User     @relation("MentorNotes", fields: [mentorId], references: [id])
+  user      User     @relation("UserNotes", fields: [userId], references: [id])
+}
+ 
+model QueryConfig {
+  id         String   @id @default(uuid())
+  config     Json
+  createdAt  DateTime @default(now())
+  created_by String
+  name       String
+}
+ 
+model JwtConfig {
+  id         String   @id @default(uuid())
+  unique_id  String
+  createdAt  DateTime @default(now())
+  expires    Boolean  @default(false)
+  created_by Int
+}
+ 
+enum Permission {
+  create
+  read
+  update
+  delete
+  manage
+}
+ 
+enum ContentType {
+  Richtext
+  Pdf
+  Link
+}
+ 
+enum BadgeType {
+  Goal
+  Milestone
+  Streak
+}
+ 
